@@ -36,27 +36,41 @@ const FILTER_ANNA = 'Anna';
 const FILTER_MAX = 'Max';
 const FILTER_JOHN = 'John';
 
-function sortingAndFiltering(array, filter, query) {
+const FILTER_CAT_ALL = 'All';
+
+function sortingAndFiltering(array, filterWithName, query, filterWithCat) {
   let arrayCopy = [...array];
 
-  if (filter === FILTER_ROMA) {
+  if (filterWithName === FILTER_ALL) {
+    arrayCopy = [...array];
+  }
+
+  if (filterWithName === FILTER_ROMA) {
     arrayCopy = arrayCopy.filter(element => element.user.name === FILTER_ROMA);
   }
 
-  if (filter === FILTER_ANNA) {
+  if (filterWithName === FILTER_ANNA) {
     arrayCopy = arrayCopy.filter(element => element.user.name === FILTER_ANNA);
   }
 
-  if (filter === FILTER_MAX) {
+  if (filterWithName === FILTER_MAX) {
     arrayCopy = arrayCopy.filter(element => element.user.name === FILTER_MAX);
   }
 
-  if (filter === FILTER_JOHN) {
+  if (filterWithName === FILTER_JOHN) {
     arrayCopy = arrayCopy.filter(element => element.user.name === FILTER_JOHN);
   }
 
-  if (filter === FILTER_ALL) {
+  if (filterWithCat === FILTER_CAT_ALL) {
     arrayCopy = [...array];
+  }
+
+  if (filterWithCat.length > 0) {
+    arrayCopy = arrayCopy.filter(
+      element => filterWithCat.includes(element.category.title),
+      // eslint-disable-next-line function-paren-newline
+      // linter doing something strange here with coma so IDK...
+    );
   }
 
   if (query) {
@@ -74,16 +88,39 @@ function sortingAndFiltering(array, filter, query) {
 export function App() {
   const [filterByName, setFilterByName] = useState(FILTER_ALL);
   const [searchingByProductName, setSearchingByPorductName] = useState('');
+  const [filterByCategories, setFilterByCategories] = useState([]);
+
+  const handleFilterByCategories = category => {
+    if (!filterByCategories.includes(category)) {
+      const newFilterByCategories = [...filterByCategories, category];
+
+      setFilterByCategories(newFilterByCategories);
+    }
+
+    if (filterByCategories.includes(category)) {
+      let newFilterByCategories = [...filterByCategories];
+
+      newFilterByCategories = newFilterByCategories.filter(
+        selectedCategory => selectedCategory !== category,
+      );
+
+      setFilterByCategories(newFilterByCategories);
+    }
+  };
+
+  const handleFilterCategoriesAllButton = () => setFilterByCategories([]);
 
   const handleResetButton = () => {
     setFilterByName(FILTER_ALL);
     setSearchingByPorductName('');
+    setFilterByCategories([]);
   };
 
   const visibleProducts = sortingAndFiltering(
     getPreparedProducts,
     filterByName,
     searchingByProductName,
+    filterByCategories,
   );
 
   return (
@@ -151,18 +188,24 @@ export function App() {
 
             <div className="panel-block is-flex-wrap-wrap">
               <a
+                onClick={handleFilterCategoriesAllButton}
                 href="#/"
                 data-cy="AllCategories"
-                className="button is-success mr-6 is-outlined"
+                className={cn('button is-success mr-6', {
+                  'is-outlined': filterByCategories.length !== 0,
+                })}
               >
                 All
               </a>
 
               {categoriesFromServer.map(category => (
                 <a
+                  onClick={() => handleFilterByCategories(category.title)}
                   key={category.id}
                   data-cy="Category"
-                  className="button mr-2 my-1 is-info"
+                  className={cn('button mr-2 my-1', {
+                    'is-info': filterByCategories.includes(category.title),
+                  })}
                   href="#/"
                 >
                   {category.title}
